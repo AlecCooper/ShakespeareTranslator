@@ -7,8 +7,45 @@ def extract_string(tags):
     if tags.string != None:
         return tags.string
     else:
-        print(tags)
+        #print(tags)
         return "@"
+
+# Given a list of lines, extracts and concatenates the lines by data id
+def extract_lines(lines):
+
+    # This dictonary holds the extracted lines, with the key being the line's data id
+    line_dict = {}
+
+    # If there is more than one line, we need to loop through and extract them
+    data_id = lines[0]["data-id"]
+
+    # temp var to hold the strings we are concatenating
+    line_string = extract_string(lines[0])
+
+    if len(lines) > 1:
+        # Loop through the remaining lines, concatenating identical ids
+        for line in lines[1:]:
+
+            # concate if same data id
+            if line["data-id"] == data_id:
+                               
+                line_string += extract_string(line)      
+            else:
+                # Add the fully concatenated line
+                line_dict[data_id] = line_string
+
+                # reset our holding variables
+                data_id = line["data-id"]       
+                line_string = ""
+
+            # Make sure we've added the last line
+        if not data_id in line_dict:
+            line_dict[data_id] = line_string
+
+    else:       
+        line_dict[data_id] = line_string
+
+    return line_dict
 
 # Given the location of a document, returns a 2d list of original and modern lines
 def parse_document(document):
@@ -44,58 +81,18 @@ def parse_document(document):
             # Extract the lines
             original_lines = original_speaker_text.findAll("span", class_=["line-mapping mapped","line-mapping"])
             translated_lines = translated_speaker_text.findAll("span",class_=["line-mapping mapped","line-mapping"])
+            print(translated_lines)
+            print(original_lines)
 
             # We must concatenate all the lines with the same data id together
             # to get the full line
             if len(original_lines) > 0 and len(translated_lines) > 0:
-
-                data_id = original_lines[0]["data-id"]
-                # temp var to hold the strings we are concatenating
-                line_string = extract_string(original_lines[0])
                 
-                # If there is more than one line, we need to loop through and extract them
-                if len(original_lines) > 1:
+                # Extract the lines from the now, update the dictonary with the new entries
+                original.update(extract_lines(original_lines))
+                translation.update(extract_lines(translated_lines))
 
-                    # Loop through the remaining lines, concatenating identical ids
-                    for line in original_lines[1:]:
-
-                        # concate if same data id
-                        if line["data-id"] == data_id:    
-                            line_string += extract_string(line)      
-                        else:
-                            original[data_id] = line_string
-
-                            # reset our holding variables
-                            data_id = line["data-id"]       
-                            line_string = ""
-
-                else:       
-                    original[data_id] = line_string
-
-                # Preform the same procedure with the translated lines
-
-                data_id = translated_lines[0]["data-id"]
-                # temp var to hold the strings we are concatenating
-                line_string = extract_string(translated_lines[0])
-                
-                # If there is more than one line, we need to loop through and extract them
-                if len(translated_lines) > 1:
-
-                    # Loop through the remaining lines, concatenating identical ids
-                    for line in translated_lines[1:]:
-
-                        # concate if same data id
-                        if line["data-id"] == data_id:    
-                            line_string += extract_string(line)    
-                        else:
-                            translation[data_id] = line_string
-
-                            # reset our holding variables
-                            data_id = line["data-id"]       
-                            line_string = ""
-
-                else:       
-                    translation[data_id] = line_string
+        print("\n")
 
     # A list of translated pairs
     corpus = []
