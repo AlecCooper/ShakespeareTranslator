@@ -7,8 +7,25 @@ def extract_string(tags):
     if tags.string != None:
         return tags.string
     else:
-        #print(tags)
-        return "@"
+        # We must remove names between <i> tags
+        if tags.find("i") != None:
+
+            # extract the text with no italizited text
+            text = tags.text
+
+            # Remove text between [], as it is often does not appear in both original/translation
+            start = text.find("[")
+            end = text.find("]")
+            if start != -1 and end != -1:
+                text = text[:start] + text[end + 1:]
+
+            # remove any right spaces and return
+            return text.rstrip(" ")
+                
+        # There could be some sort of annotation on the line, in which case we mark it for later removal
+        # (Maybe fix later?)
+        print(tags)
+        return "@" 
 
 # Given a list of lines, extracts and concatenates the lines by data id
 def extract_lines(lines):
@@ -81,8 +98,6 @@ def parse_document(document):
             # Extract the lines
             original_lines = original_speaker_text.findAll("span", class_=["line-mapping mapped","line-mapping"])
             translated_lines = translated_speaker_text.findAll("span",class_=["line-mapping mapped","line-mapping"])
-            print(translated_lines)
-            print(original_lines)
 
             # We must concatenate all the lines with the same data id together
             # to get the full line
@@ -91,8 +106,6 @@ def parse_document(document):
                 # Extract the lines from the now, update the dictonary with the new entries
                 original.update(extract_lines(original_lines))
                 translation.update(extract_lines(translated_lines))
-
-        print("\n")
 
     # A list of translated pairs
     corpus = []
