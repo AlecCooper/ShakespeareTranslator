@@ -36,7 +36,7 @@ def extract_lines(lines):
 
                 # reset our holding variables
                 data_id = line["data-id"]       
-                line_string = ""
+                line_string = extract_string(line)
 
             # Make sure we've added the last line
         if not data_id in line_dict:
