@@ -23,11 +23,9 @@ def parse_document(document):
     # Filter out the title at the start of the comparison rows
     rows = rows[1:]
 
-    # list of oirginal lines and translated lines
-    original = []
-    translation = []
-
-    ctr = 0
+    # dict of oirginal lines and translated lines
+    original = {}
+    translation = {}
 
     # Loop through translations
     for row in rows:
@@ -65,14 +63,14 @@ def parse_document(document):
                         if line["data-id"] == data_id:    
                             line_string += extract_string(line)      
                         else:
-                            original.append((line_string,data_id))
+                            original[data_id] = line_string
 
                             # reset our holding variables
                             data_id = line["data-id"]       
                             line_string = ""
 
                 else:       
-                    original.append((line_string,data_id))
+                    original[data_id] = line_string
 
                 # Preform the same procedure with the translated lines
 
@@ -90,16 +88,27 @@ def parse_document(document):
                         if line["data-id"] == data_id:    
                             line_string += extract_string(line)    
                         else:
-                            translation.append((line_string,data_id))
+                            translation[data_id] = line_string
 
                             # reset our holding variables
                             data_id = line["data-id"]       
                             line_string = ""
 
                 else:       
-                    translation.append((line_string,data_id))
-            
-    return original, translation
+                    translation[data_id] = line_string
+
+    # A list of translated pairs
+    corpus = []
+
+    # Loop through translation, orignal and match data id
+    for data_id in original:
+        
+        # Is there a matching id in the other dict?
+        if data_id in translation:
+            corpus.append((original[data_id], translation[data_id]))
+
+
+    return corpus
     
 # Lists holding the original, translated lines
 original = []
@@ -108,13 +117,9 @@ translation = []
 # Directory containing the webpages
 #rootdir = os.getcwd() + "/www.litcharts.com/shakescleare/shakespeare-translations"
 
-#test1, test2 = parse_document(rootdir + "/coriolanus/act-1-scene-1")
-test1, test2 = parse_document("test.html")
+test1 = parse_document("test.html")
 print(test1)
-print(test2) 
-
 print(len(test1))
-print(len(test2))
 
 # We loop through all the directories and parse all the files
 #for subdir, dirs, files in os.walk(rootdir):
