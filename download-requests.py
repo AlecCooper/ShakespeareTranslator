@@ -141,7 +141,7 @@ def parse_document(soup):
 
     return corpus
 
-# Saves the corpus as a pickle object
+# Saves the corpus as a csv file
 def save(corpus, name):
 
     # Create dataframe
