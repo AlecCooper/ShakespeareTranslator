@@ -15,7 +15,7 @@ def init_driver():
     driver = webdriver.Chrome(options=chrome_options, executable_path=chrome_driver)
     return driver
 
-# Retrives the url and returns it as a soup
+# Retrieves the url and returns it as a soup
 def make_soup(url, driver):
 
     # Download the url
