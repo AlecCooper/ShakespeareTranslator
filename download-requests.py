@@ -1,7 +1,35 @@
 from bs4 import BeautifulSoup
+import urllib.request as urllib
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
 import os
 
-# This method extracts a string from between html tags
+def init_driver():
+    # Setup headless chrome
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--window-size=1024x1400")
+    chrome_driver = os.path.join(os.getcwd(), "chromedriver")
+    driver = webdriver.Chrome(options=chrome_options, executable_path=chrome_driver)
+    return driver
+
+# Retrives the url and returns it as a soup
+def make_soup(url, driver):
+
+    # Download the url
+    print("Downloading " + url)
+    driver.get(url)
+
+    # Parse with beautiful soup
+    print("Parsing " + url)
+    source = driver.page_source
+    soup = BeautifulSoup(source,"lxml")
+
+    return soup
+
+# This method extrats a string from between html tags
 def extract_string(tags):
 
     if tags.string != None:
@@ -24,7 +52,6 @@ def extract_string(tags):
                 
         # There could be some sort of annotation on the line, in which case we mark it for later removal
         # (Maybe fix later?)
-        print(tags)
         return "@" 
 
 # Given a list of lines, extracts and concatenates the lines by data id
@@ -65,11 +92,7 @@ def extract_lines(lines):
     return line_dict
 
 # Given the location of a document, returns a 2d list of original and modern lines
-def parse_document(document):
-
-    # open document
-    with open(document) as fp:
-        soup = BeautifulSoup(fp,'html.parser')
+def parse_document(soup):
     
     # Filter to just the rows comparing translation/original
     rows = soup.findAll("div",class_="comparison-row")
@@ -115,43 +138,25 @@ def parse_document(document):
         
         # Is there a matching id in the other dict?
         if data_id in translation:
-            corpus.append((original[data_id], translation[data_id]))
-
+            corpus.append((data_id, original[data_id], translation[data_id]))
 
     return corpus
+
+# Saves the corpus as a pickle object
+def save(corpus, name):
+
+    # Create dataframe
+    corpus_df = pd.DataFrame(corpus, columns=["id", "original", "translation"])
+
+    # Save dataframe
+    corpus_df.to_csv(name)
     
-# Lists holding the original, translated lines
-original = []
-translation = []
-
-# Directory containing the webpages
-#rootdir = os.getcwd() + "/www.litcharts.com/shakescleare/shakespeare-translations"
-
-test1 = parse_document("test.html")
-print(test1)
-print(len(test1))
-
-# We loop through all the directories and parse all the files
-#for subdir, dirs, files in os.walk(rootdir):
- #   for file in files:
-  #      print("Parsing" + os.path.join(subdir, file))
-   #     new_original, new_translation = parse_document(os.path.join(subdir, file))
-
-    #    print(new_original)
-
-        #original = original.extend(new_original)
-        #translation = translation.extend(new_translation)
+driver = init_driver()
+soup = make_soup("https://www.litcharts.com/shakescleare/shakespeare-translations/coriolanus/act-1-scene-1",driver)
+test1 = parse_document(soup)
+save(test1,"test.csv")
 
 
-        
-# Save to text documents
-#with open("original.txt", "w") as f:
- #   for line in original:
-  #      f.write("%s\n" % line)
-
-#with open("translation.txt", "w") as f:
- #   for line in translation:
-  #      f.write("%s\n" % line)
 
 
 
