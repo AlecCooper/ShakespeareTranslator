@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import urllib.request as urllib
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
