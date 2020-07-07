@@ -72,7 +72,7 @@ def extract_lines(lines):
             # concate if same data id
             if line["data-id"] == data_id:
                                
-                line_string += extract_string(line)      
+                line_string += " " + extract_string(line)      
             else:
                 # Add the fully concatenated line
                 line_dict[data_id] = line_string
