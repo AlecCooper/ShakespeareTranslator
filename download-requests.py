@@ -149,11 +149,23 @@ def save(corpus, name):
 
     # Save dataframe
     corpus_df.to_csv(name)
-    
-driver = init_driver()
-soup = make_soup("https://www.litcharts.com/shakescleare/shakespeare-translations/coriolanus/act-1-scene-1",driver)
-test1 = parse_document(soup)
-save(test1,"test.csv")
+
+def main():
+
+    # Initalize the driver to run javascript
+    driver = init_driver()
+    soup = make_soup("https://www.litcharts.com/shakescleare/shakespeare-translations/the-tempest",driver)
+    test1 = parse_document(soup)
+    save(test1,"test.csv")
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
 
 
 
