@@ -152,11 +152,26 @@ def save(corpus, name):
 
 def main():
 
+    # Read in the xml file containing our links
+    link_file = open("links.txt","r")
+    links = link_file.read().splitlines()
+
     # Initalize the driver to run javascript
     driver = init_driver()
-    soup = make_soup("https://www.litcharts.com/shakescleare/shakespeare-translations/the-tempest",driver)
-    test1 = parse_document(soup)
-    save(test1,"test.csv")
+
+    # The list of translated pairs
+    corpus = []
+
+    # Loop through links and parse
+    for link in links:
+        
+        # Download the file
+        soup = make_soup(link,driver)
+
+        # Parse the file
+        corpus.extend(parse_document(soup))
+
+    save(corpus,"corpus.csv")
 
 if __name__ == "__main__":
     main()
