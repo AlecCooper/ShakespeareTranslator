@@ -22,8 +22,22 @@ def clean(text):
 
     # Remove quotations
     text = text.replace("\"", "")
+    text = text.replace("“","")
+
+    # Change multi spaces to single spaces
+    while "  " in text:
+        text = text.replace("  ", " ")
+
+    # Remove any leading or trailing whitespace
+    text = text.rstrip().lstrip()
+
+    # Check if string is ascii, returning nothing if not
+    if not all(ord(c) < 128 for c in text):
+        return ""
 
     return text
+
+    
 
 def main():
 
@@ -35,4 +49,4 @@ def main():
 
         pass
 
-print(clean("What worser place can I beg in your love—"))
+print(clean("Of what quality was your love, then?"))
