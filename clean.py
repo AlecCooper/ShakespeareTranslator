@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 # Given a text line, cleans the text for processing
 def clean(text):
@@ -37,16 +38,26 @@ def clean(text):
 
     return text
 
-    
-
 def main():
 
     # Read in the corpus file
     corpus = pd.read_csv("corpus.csv")
+    corpus = corpus.to_numpy()
+
+    # loop counter
+    row_num = 0
 
     # loop through corpus and clean all the text
     for row in corpus:
 
-        pass
+        # Clean the text
+        corpus[row_num][2] = clean(row[2])
+        corpus[row_num][3] = clean(row[3])
 
-print(clean("Of what quality was your love, then?"))
+        # iterate counter
+        row_num += 1
+
+    print(corpus)
+
+
+main()
