@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from nltk.tokenize import word_tokenize
 
 # Given a text line, cleans the text for processing
 def clean(text):
@@ -38,6 +39,50 @@ def clean(text):
 
     return text
 
+# Removes empty or invalid lines from the corpus
+def filter_text(corpus):
+
+    # This list contains the valid corpus
+    new_corpus = []
+
+    # Loop through every line so we can filter
+    for row in corpus:
+
+        # Should we add the line?
+        valid = True
+
+        # We filter out empty lines
+        if row[2] == "" or row[3] == "":
+            valid = False
+
+        # An @ symbol in the line signifies invalidity
+        if "@" in row[2] or "@" in row[3]:
+            valid = False
+
+        # If valid line, we include it
+        if valid:
+            new_corpus.append([row[2],row[3]])
+
+    # Turn into numpy array
+    new_corpus = np.array(new_corpus)
+
+    return new_corpus
+
+# Tokenize each sentence in the corpus
+def tokenize(corpus):
+
+    # list of tokenized lines
+    tokenized = []
+
+    # loop through each translation couplet
+    for row in corpus:
+
+        # tokenize translation couplet and add
+        tokenized.append([word_tokenize(row[0]), word_tokenize(row[1])])
+
+    return tokenized
+
+
 def main():
 
     # Read in the corpus file
@@ -56,6 +101,12 @@ def main():
 
         # iterate counter
         row_num += 1
+
+    # Filter out invalid text
+    corpus = filter_text(corpus)
+
+    # Tokenize the text
+    corpus = tokenize(corpus)
 
     print(corpus)
 
