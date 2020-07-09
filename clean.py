@@ -69,7 +69,7 @@ def filter_text(corpus):
     return new_corpus
 
 # Tokenize each sentence in the corpus
-def tokenize(corpus):
+def tokenize(corpus, max_length):
 
     # list of tokenized lines
     tokenized = []
@@ -77,13 +77,60 @@ def tokenize(corpus):
     # loop through each translation couplet
     for row in corpus:
 
-        # tokenize translation couplet and add
-        tokenized.append([word_tokenize(row[0]), word_tokenize(row[1])])
+        # tokenize translation couplet
+        tokenized_lines = (word_tokenize(row[0]), word_tokenize(row[1]))
+
+        # Make sure they are under the max allowed length
+        if len(tokenized_lines[0]) <= max_length and len(tokenized_lines[1]) <= max_length:
+            tokenized.append([tokenized_lines[0],tokenized_lines[1]])
 
     return tokenized
 
+# Given a list of tokenized words, creates a word embedding
+# aka a unique integer is assinged to every unique word in the vocab
+def word_embed(lines):
+
+    # This dictonary defines our vocab
+    vocab = {}
+
+    # The integer we map each new token to
+    map_int = 0
+
+    # the list of embedded lines 
+    embedded = []
+
+    # loop through every line and embedd
+    for line in lines:
+
+        # the integerized tokens are stored in this list
+        new_line = []
+
+        for token in line:
+            
+            # If the token is already included in the vocab,
+            # we can map it to an integer
+            if token in vocab:
+                new_line.append(vocab[token])
+
+            # If the token is not in the vocab, we map it to a
+            # new integer
+            else:
+                # Create new mapping
+                vocab[token] = map_int
+
+                new_line.append(map_int) 
+                map_int += 1
+
+
+        embedded.append(new_line)
+
+
+    return embedded
 
 def main():
+
+    # Hyperparamaters
+    max_length = 40
 
     # Read in the corpus file
     corpus = pd.read_csv("corpus.csv")
@@ -106,9 +153,15 @@ def main():
     corpus = filter_text(corpus)
 
     # Tokenize the text
-    corpus = tokenize(corpus)
+    corpus = tokenize(corpus, max_length)
 
-    print(corpus)
+    # Embedd the text
+    original = word_embed(corpus[0])
+    translation = word_embed(corpus[1])
 
+    print(original)
+
+    
 
 main()
+
