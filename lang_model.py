@@ -1,27 +1,32 @@
 import tensorflow as tf
 from tensorflow.keras import Model
 
-class LangModel(Model):
+class Encoder(Model):
 
     def __init__(self):
-        super(LangModel, self).__init__()
+        super(Encoder, self).__init__()
+
+   
+
+    def call(self):
+
+        pass
 
 
-        def encode(self):
+class Decoder(Model):
 
-            # This method will contain the encoder RNN of the language model
+    def __init__(self):
+        super(Encoder, self).__init__()
 
-            pass
+   
 
+    def call(self):
+
+        pass
+
+
+class Attention(tf.keras.layers.Layer):
+    def __init__(self):
+        super(Attention, self).__init__()
         
-        def decode(self):
 
-            # This method will contain the decoder RNN of the language model
-
-            pass
-
-        def attention(self):
-
-            # This method will calculate the model's current attention
-
-            pass
