@@ -21,9 +21,14 @@ class Encoder(Model):
         self.lstm = tf.keras.layers.LSTM(self.encode_units,return_sequences=True,return_state=True)
     
 
-    def call(self):
+    def call(self, x, hidden):
 
-        pass
+        # For the first layer we embedd the input into a dense vector
+        x = self.embedding(x)
+        # 2nd layer, we pass through the lstm
+        x, state = self.lstm(x,initial_state=hidden)
+
+        return x, state
 
 
 class Decoder(Model):
@@ -45,9 +50,14 @@ class Decoder(Model):
         # ontop of each other
         self.lstm = tf.keras.layers.LSTM(self.decode_units,return_sequences=True,return_state=True)
 
-    def call(self):
+    def call(self, x, hidden):
 
-        pass
+        # For the first layer we embedd the input into a dense vector
+        x = self.embedding(x)
+        # 2nd layer, we pass through the lstm
+        x, state = self.lstm(x,initial_state=hidden)
+
+        return x, state
 
 
 class Attention(tf.keras.layers.Layer):
