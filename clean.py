@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from nltk.tokenize import word_tokenize
+import tensorflow as tf
+from tensorflow import keras
 
 # Given a text line, cleans the text for processing
 def clean(text):
@@ -72,7 +74,8 @@ def filter_text(corpus):
 def tokenize(corpus, max_length):
 
     # list of tokenized lines
-    tokenized = []
+    original = []
+    translated = []
 
     # loop through each translation couplet
     for row in corpus:
@@ -82,19 +85,14 @@ def tokenize(corpus, max_length):
 
         # Make sure they are under the max allowed length
         if len(tokenized_lines[0]) <= max_length and len(tokenized_lines[1]) <= max_length:
-            tokenized.append([tokenized_lines[0],tokenized_lines[1]])
+            original.append(tokenized_lines[0])
+            translated.append(tokenized_lines[1])
 
-    return tokenized
+    return original, translated
 
-# Given a list of tokenized words, creates a word embedding
-# aka a unique integer is assinged to every unique word in the vocab
-def word_embed(lines):
-
-    # This dictonary defines our vocab
-    vocab = {}
-
-    # The integer we map each new token to
-    map_int = 0
+# Given a list of tokenized words and a dictonary with a word mapping
+# a unique integer is assinged to every unique word in the vocab
+def word_embed(lines, vocab, map_int):
 
     # the list of embedded lines 
     embedded = []
@@ -121,11 +119,9 @@ def word_embed(lines):
                 new_line.append(map_int) 
                 map_int += 1
 
-
         embedded.append(new_line)
 
-
-    return embedded
+    return embedded, vocab, map_int
 
 def main():
 
@@ -153,14 +149,19 @@ def main():
     corpus = filter_text(corpus)
 
     # Tokenize the text
-    corpus = tokenize(corpus, max_length)
+    original, translation = tokenize(corpus, max_length)
 
     # Embedd the text
-    original = word_embed(corpus[0])
-    translation = word_embed(corpus[1])
+    vocab = {}    # The dictonary from which we map tokens to ints  
+    map_int = 1    # The integer we start mapping to
+    original, vocab, map_int = word_embed(original, vocab, map_int)
+    translation, vocab, map_int = word_embed(translation, vocab, map_int)
+
+    # Pad the text
+    original = tf.keras.preprocessing.sequence.pad_sequences(original, padding="post")
+    translation = tf.keras.preprocessing.sequence.pad_sequences(translation, padding="post")
 
     print(original)
-
     
 
 main()

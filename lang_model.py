@@ -14,7 +14,7 @@ class Encoder(Model):
 
         # The embedding layer takes our input,  a vector of positive integers
         # representing indicies and turns them into a dense vector
-        self.embedding = tf.keras.layers.Embedding(vocab_len, embed_dim)
+        self.embedding = tf.keras.layers.Embedding(vocab_len, embed_dim, mask_zero=True)
 
         # The lstm layers are the RNNs in our encoder decoder, which are stacked
         # ontop of each other
@@ -39,7 +39,7 @@ class Decoder(Model):
 
         # The embedding layer takes our input,  a vector of positive integers
         # representing indicies and turns them into a dense vector
-        self.embedding = tf.keras.layers.Embedding(vocab_len, embed_dim)
+        self.embedding = tf.keras.layers.Embedding(vocab_len, embed_dim, mask_zero=True)
 
         # The lstm layers are the RNNs in our encoder decoder, which are stacked
         # ontop of each other
