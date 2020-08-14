@@ -165,6 +165,8 @@ def main():
     np.save("data/original", original)
     np.save("data/translation", translation)
     
+    # Print our vocab size
+    print("Vocab size: " + str(len(vocab)))
 
 main()
 
