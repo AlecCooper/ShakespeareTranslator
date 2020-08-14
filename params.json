@@ -1,1 +1,1 @@
-{"epochs":1,"batch size":10}
+{"epochs":1,"batch size":10,"learning rate":0.001}

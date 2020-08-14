@@ -4,7 +4,21 @@ import tensorflow as tf
 from lang_model import Encoder
 from lang_model import Decoder
 
-def train(num_epochs, batch_size, original, translation):
+# The loss function we use to calculate training loss
+def loss_func(actual, pred, loss_obj):
+
+    # Calculate the cross entropy with our loss object
+    loss = loss_obj(actual, pred)
+
+    return loss
+
+def train(num_epochs, batch_size, lr, original, translation):
+
+    # Define the optimizer
+    optim = tf.keras.optimizers.Adam(learning_rate=lr)
+
+    # Object used to calculate loss
+    loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction=None)
 
     # Training loop
     for epoch in range(1,num_epochs+1):
@@ -39,8 +53,10 @@ if __name__ == "__main__":
     num_epochs = hyper["epochs"]
     # Batch size
     batch_size = hyper["batch size"]
+    # Learning rate
+    lr = hyper["learning rate"]
 
     # Train the model
-    train(num_epochs, batch_size, original, translation)
+    train(num_epochs, batch_size, lr, original, translation)
 
     
