@@ -19,7 +19,6 @@ class Encoder(Model):
         # The lstm layers are the RNNs in our encoder decoder, which are stacked
         # ontop of each other
         self.lstm = tf.keras.layers.LSTM(self.encode_units,return_sequences=True,return_state=True)
-    
 
     def call(self, x, hidden):
 
@@ -30,6 +29,8 @@ class Encoder(Model):
 
         return x, state
 
+    def initalize_hidden(self):
+        return tf.zeros((self.batch_size, self.encode_units))
 
 class Decoder(Model):
 
@@ -59,6 +60,8 @@ class Decoder(Model):
 
         return x, state
 
+    def initalize_hidden(self):
+        return tf.zeros((self.batch_size, self.encode_units))
 
 class Attention(tf.keras.layers.Layer):
     def __init__(self):

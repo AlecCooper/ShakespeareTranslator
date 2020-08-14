@@ -161,7 +161,9 @@ def main():
     original = tf.keras.preprocessing.sequence.pad_sequences(original, padding="post")
     translation = tf.keras.preprocessing.sequence.pad_sequences(translation, padding="post")
 
-    print(original)
+    # Save data
+    np.save("data/original", original)
+    np.save("data/translation", translation)
     
 
 main()
