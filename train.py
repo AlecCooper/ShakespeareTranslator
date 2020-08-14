@@ -17,6 +17,9 @@ def loss_func(actual, pred, loss_obj):
     # Apply the mask
     loss = loss * mask
 
+    # Reduce to mean across dims
+    loss = tf.reduce_mean(loss)
+
     return loss
 
 def train(num_epochs, batch_size, lr, original, translation):
@@ -37,6 +40,9 @@ def train(num_epochs, batch_size, lr, original, translation):
             pass
 
         pass
+
+    # test loss function
+    #print(loss_func(original, translation, loss_obj))
 
 if __name__ == "__main__":
 
@@ -65,5 +71,8 @@ if __name__ == "__main__":
 
     # Train the model
     train(num_epochs, batch_size, lr, original, translation)
+
+    print(np.shape(translation))
+    print(np.shape(original))
 
     
