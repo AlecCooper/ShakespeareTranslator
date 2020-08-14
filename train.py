@@ -10,6 +10,13 @@ def loss_func(actual, pred, loss_obj):
     # Calculate the cross entropy with our loss object
     loss = loss_obj(actual, pred)
 
+    # Masking on end of sentence marker
+    mask = tf.math.logical_not(tf.math.equal(0,actual))
+    mask = tf.cast(mask,dtype=loss.dtype)
+
+    # Apply the mask
+    loss = loss * mask
+
     return loss
 
 def train(num_epochs, batch_size, lr, original, translation):
@@ -18,7 +25,7 @@ def train(num_epochs, batch_size, lr, original, translation):
     optim = tf.keras.optimizers.Adam(learning_rate=lr)
 
     # Object used to calculate loss
-    loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction=None)
+    loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction="none")
 
     # Training loop
     for epoch in range(1,num_epochs+1):
