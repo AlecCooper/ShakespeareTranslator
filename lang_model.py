@@ -9,12 +9,15 @@ class Encoder(Model):
         # The size of each batch used when minibatch training
         self.batch_size = batch_size
 
+        # The output size after our embedding layer
+        self.embed_dim = embed_dim
+
         # The input dimension to the RNN layers
         self.encode_units = encode_units
 
         # The embedding layer takes our input,  a vector of positive integers
         # representing indicies and turns them into a dense vector
-        self.embedding = tf.keras.layers.Embedding(vocab_len, embed_dim, mask_zero=True)
+        self.embedding = tf.keras.layers.Embedding(vocab_len, self.embed_dim, mask_zero=True)
 
         # The lstm layers are the RNNs in our encoder decoder, which are stacked
         # ontop of each other
