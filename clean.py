@@ -1,3 +1,4 @@
+import json, argparse
 import pandas as pd
 import numpy as np
 from nltk.tokenize import word_tokenize
@@ -125,8 +126,17 @@ def word_embed(lines, vocab, map_int):
 
 def main():
 
-    # Hyperparamaters
-    max_length = 40
+    # Get Command Line Arguments
+    parser = argparse.ArgumentParser(description="Shakespeare Translator in TensorFlow")
+    parser.add_argument("params",metavar="param_file.json",help="location of hyperparamater json", type=str)
+    args = parser.parse_args()
+
+    # Hyperparameters from json file
+    with open(args.params) as paramfile:
+        hyper = json.load(paramfile)
+
+    # Extract max sentence length from the hyperparamater file
+    max_length = hyper["max sentence length"]
 
     # Read in the corpus file
     corpus = pd.read_csv("corpus.csv")
