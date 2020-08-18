@@ -23,17 +23,18 @@ class Encoder(Model):
         # ontop of each other
         self.lstm = tf.keras.layers.LSTM(self.encode_units,return_sequences=True,return_state=True)
 
-    def call(self, x, hidden):
+    def call(self, seq_input, mem_state, carry_state):
 
         # For the first layer we embedd the input into a dense vector
-        x = self.embedding(x)
-        # 2nd layer, we pass through the lstm
-        x, state = self.lstm(x,initial_state=hidden)
+        embed_output = self.embedding(seq_input)
 
-        return x, state
+        # 2nd layer, we pass through the lstm
+        seq_output, mem_state, carry_state = self.lstm(embed_output,initial_state=(mem_state, carry_state))
+
+        return seq_output, mem_state, carry_state
 
     def initalize_hidden(self):
-        return tf.zeros((self.batch_size, self.encode_units))
+        return (tf.zeros((self.batch_size, self.encode_units)),tf.zeros((self.batch_size, self.encode_units)))
 
 class Decoder(Model):
 
@@ -54,17 +55,18 @@ class Decoder(Model):
         # ontop of each other
         self.lstm = tf.keras.layers.LSTM(self.decode_units,return_sequences=True,return_state=True)
 
-    def call(self, x, hidden):
+    def call(self, seq_input, mem_state, carry_state):
 
         # For the first layer we embedd the input into a dense vector
-        x = self.embedding(x)
-        # 2nd layer, we pass through the lstm
-        x, state = self.lstm(x,initial_state=hidden)
+        embed_output = self.embedding(seq_input)
 
-        return x, state
+        # 2nd layer, we pass through the lstm
+        seq_output, mem_state, carry_state = self.lstm(embed_output,initial_state=(mem_state, carry_state))
+
+        return seq_output, mem_state, carry_state
 
     def initalize_hidden(self):
-        return tf.zeros((self.batch_size, self.encode_units))
+        return (tf.zeros((self.batch_size, self.encode_units)),tf.zeros((self.batch_size, self.encode_units)))
 
 class Attention(tf.keras.layers.Layer):
     def __init__(self):
