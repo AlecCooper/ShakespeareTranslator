@@ -1,6 +1,8 @@
 import argparse, json
 import numpy as np
 import tensorflow as tf
+import os
+import time
 from lang_model import Encoder
 from lang_model import Decoder
 
@@ -22,7 +24,7 @@ def loss_func(actual, pred, loss_obj):
 
     return loss
 
-def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset):
+def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_dir):
 
     # Extract the embedding_dim from the data set
     vocab_len = 24191     # note: come up with more elegent way to grab this num
@@ -75,8 +77,16 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset):
     # Object used to calculate loss
     loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction="none")
 
+    # Checkpoint for saving
+    check_dir = "./" + check_dir
+    checkpoint = tf.train.Checkpoint(optimizer=optim, encoder=encoder, decoder=decoder)
+    checkpoint_prefix = os.path.join(check_dir, "ckpt")
+
     # Training loop
     for epoch in range(1,num_epochs+1):
+
+        # Time the epochs
+        start = time.time()
 
         # Initalize the hidden state of our encoder
         encoder_hidden = encoder.initalize_hidden()
@@ -94,14 +104,18 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset):
             if batch % 100 == 0:
                 print('Epoch {} Batch {} Loss {:.4f}'.format(epoch, batch, batch_loss.numpy()))
 
+            # Save every epoch
+            checkpoint.save(file_prefix = checkpoint_prefix)
+
+        print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 
 if __name__ == "__main__":
 
     # Get Command Line Arguments
     parser = argparse.ArgumentParser(description="Shakespeare Translator in TensorFlow")
-    parser.add_argument("data", metavar="data_dir", help="Folder containing numpy files of original and translated data", type=str)
+    parser.add_argument("data", metavar="/data_dir", help="Folder containing numpy files of original and translated data", type=str)
     parser.add_argument("params",metavar="param_file.json",help="location of hyperparamater json", type=str)
-    parser.add_argument('-c', type=str, default="/training_checkpoints", metavar='/training_checkpoints',help='Enable training checkpoints stored to the given dir')
+    parser.add_argument('-c', type=str, default="/checkpoint_dir", metavar='/training_checkpoints',help='Enable training checkpoints stored to the given dir')
     args = parser.parse_args()
 
     # Hyperparameters from json file
@@ -113,6 +127,14 @@ if __name__ == "__main__":
     original = np.load(args.data + "/original.npy")
     translation = np.load(args.data + "/translation.npy")
     print("Done")
+
+    # Checkpoint directory
+    check_dir = args.c
+    # check if the directory exists
+    cwd = os.getcwd()
+    if not os.path.exists(cwd + check_dir):
+        # Create the dir to hold the checkpoints
+        os.mkdir(cwd + check_dir)
 
     # Number of training epochs for out training loop
     num_epochs = hyper["epochs"]
@@ -130,9 +152,6 @@ if __name__ == "__main__":
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
     # Train the model
-    train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset)
-
-    print(np.shape(translation))
-    print(np.shape(original))
+    train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_dir)
 
     
