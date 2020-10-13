@@ -1,11 +1,11 @@
 from lang_model import Encoder, Decoder
 import tensorflow as tf
 import os
+from clean import clean_sentence
 
 def eval(sentence):
 
     pass
-
 
 def translate(sentence):
 
@@ -15,6 +15,7 @@ def translate(sentence):
     embed_dim = 256
     encode_units = 128
     batch_size = 10
+    max_length = 40
 
     # Create and Encoder and Decoder
     encoder = Encoder(vocab_len, embed_dim, encode_units, batch_size)
@@ -28,7 +29,9 @@ def translate(sentence):
     checkpoint_dir = cwd + checkpoint_dir
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
+    # Clean the sentence
+    sentence = clean_sentence(sentence, max_length)
     
-    print("test")
+    print(sentence)
 
-translate("test")
+translate("This is a test")
