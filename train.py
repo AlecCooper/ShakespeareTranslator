@@ -104,10 +104,10 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_di
             if batch % 100 == 0:
                 print('Epoch {} Batch {} Loss {:.4f}'.format(epoch, batch, batch_loss.numpy()))
 
-            # Save every epoch
-            checkpoint.save(file_prefix = checkpoint_prefix)
-
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+        # Save every epoch
+        checkpoint.save(file_prefix = checkpoint_prefix)
+
 
 if __name__ == "__main__":
 
