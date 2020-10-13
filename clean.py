@@ -4,6 +4,7 @@ import numpy as np
 from nltk.tokenize import word_tokenize
 import tensorflow as tf
 from tensorflow import keras
+import pickle
 
 # Given a text line, cleans the text for processing
 def clean(text):
@@ -126,17 +127,8 @@ def word_embed(lines, vocab, map_int):
 
 def main():
 
-    # Get Command Line Arguments
-    parser = argparse.ArgumentParser(description="Shakespeare Translator in TensorFlow")
-    parser.add_argument("params",metavar="param_file.json",help="location of hyperparamater json", type=str)
-    args = parser.parse_args()
-
-    # Hyperparameters from json file
-    with open(args.params) as paramfile:
-        hyper = json.load(paramfile)
-
     # Extract max sentence length from the hyperparamater file
-    max_length = hyper["max sentence length"]
+    max_length = 40
 
     # Read in the corpus file
     corpus = pd.read_csv("corpus.csv")
@@ -174,7 +166,11 @@ def main():
     # Save data
     np.save("data/original", original)
     np.save("data/translation", translation)
-    
+
+    # Save the dictonary 
+    with open('vocab.pickle', 'wb') as handle:
+        pickle.dump(vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
     # Print our vocab size
     print("Vocab size: " + str(len(vocab)))
 
