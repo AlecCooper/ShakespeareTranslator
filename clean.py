@@ -125,6 +125,34 @@ def word_embed(lines, vocab, map_int):
 
     return embedded, vocab, map_int
 
+def clean_sentence(text, max_length):
+
+    # load in the vocab
+    with open('vocab.pickle', 'rb') as handle:
+        vocab = pickle.load(handle)
+
+    # clean the text
+    text = clean(text)
+
+    # Use nltk to tokenize the sentence
+    text = word_tokenize(text)
+
+    # list we will append the token inidices to
+    embedded_text = []
+
+    # embedd each token
+    for token in text:
+        embedded_text.append(vocab[token])
+
+    # Pad the sentence
+    while len(embedded_text) < max_length:
+        embedded_text.append(0)
+
+    # Turn into numpy array
+    sentence = np.array(embedded_text)
+
+    return sentence
+
 def main():
 
     # Extract max sentence length from the hyperparamater file
