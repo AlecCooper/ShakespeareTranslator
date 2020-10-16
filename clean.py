@@ -4,6 +4,7 @@ import numpy as np
 from nltk.tokenize import word_tokenize
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
 import pickle
 
 # Given a text line, cleans the text for processing
@@ -85,6 +86,12 @@ def tokenize(corpus, max_length):
         # tokenize translation couplet
         tokenized_lines = (word_tokenize(row[0]), word_tokenize(row[1]))
 
+        # Insert start and end tokens
+        tokenized_lines[0].append("<end>")
+        tokenized_lines[0].insert(0, "<start>")
+        tokenized_lines[1].append("<end>")
+        tokenized_lines[1].insert(0, "<start>")
+
         # Make sure they are under the max allowed length
         if len(tokenized_lines[0]) <= max_length and len(tokenized_lines[1]) <= max_length:
             original.append(tokenized_lines[0])
@@ -94,7 +101,7 @@ def tokenize(corpus, max_length):
 
 # Given a list of tokenized words and a dictonary with a word mapping
 # a unique integer is assinged to every unique word in the vocab
-def word_embed(lines, vocab, map_int):
+def word_embed(lines, vocab, rev_vocab, map_int):
 
     # the list of embedded lines 
     embedded = []
@@ -117,13 +124,14 @@ def word_embed(lines, vocab, map_int):
             else:
                 # Create new mapping
                 vocab[token] = map_int
+                rev_vocab[map_int] = token
 
                 new_line.append(map_int) 
                 map_int += 1
 
         embedded.append(new_line)
 
-    return embedded, vocab, map_int
+    return embedded, vocab, rev_vocab, map_int
 
 def clean_sentence(text, max_length):
 
@@ -137,7 +145,7 @@ def clean_sentence(text, max_length):
     # Use nltk to tokenize the sentence
     text = word_tokenize(text)
 
-    # list we will append the token inidices to
+    # list we will append the token indices to
     embedded_text = []
 
     # embedd each token
@@ -156,7 +164,7 @@ def clean_sentence(text, max_length):
 def main():
 
     # Extract max sentence length from the hyperparamater file
-    max_length = 40
+    max_length = 42
 
     # Read in the corpus file
     corpus = pd.read_csv("corpus.csv")
@@ -183,9 +191,10 @@ def main():
 
     # Embedd the text
     vocab = {}    # The dictonary from which we map tokens to ints  
+    rev_vocab = {}
     map_int = 1    # The integer we start mapping to
-    original, vocab, map_int = word_embed(original, vocab, map_int)
-    translation, vocab, map_int = word_embed(translation, vocab, map_int)
+    original, vocab, rev_vocab, map_int = word_embed(original, vocab, rev_vocab, map_int)
+    translation, vocab, rev_vocab, map_int = word_embed(translation, vocab, rev_vocab, map_int)
 
     # Pad the text
     original = tf.keras.preprocessing.sequence.pad_sequences(original, padding="post")
@@ -198,6 +207,9 @@ def main():
     # Save the dictonary 
     with open('vocab.pickle', 'wb') as handle:
         pickle.dump(vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    with open('rev_vocab.pickle', 'wb') as handle:
+        pickle.dump(rev_vocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # Print our vocab size
     print("Vocab size: " + str(len(vocab)))
