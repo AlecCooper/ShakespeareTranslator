@@ -69,7 +69,7 @@ class Attention(tf.keras.layers.Layer):
 
 class Decoder(Model):
 
-    def __init__(self,vocab_len, embed_dim, decode_units, batch_size):
+    def __init__(self, vocab_len, embed_dim, decode_units, batch_size):
         super(Decoder, self).__init__()
 
         # The size of each batch used when minibatch training
