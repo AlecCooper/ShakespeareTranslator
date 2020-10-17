@@ -24,7 +24,7 @@ def loss_func(actual, pred, loss_obj):
 
     return loss
 
-def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_dir):
+def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset):
 
     # Extract the embedding_dim from the data set
     vocab_len = 24191     # note: come up with more elegent way to grab this num
@@ -38,7 +38,7 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_di
             loss = 0
             
             # Run the encoder on the input
-            encoder_output, encoder_hidden = encoder(input_seq, encoder_hidden)
+            encoder_output, encoder_hidden = encoder([input_seq, encoder_hidden])
 
             # Initalize first decoder hidden states to final encoder hidden states
             decoder_hidden = encoder_hidden
@@ -49,7 +49,7 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_di
             for t in range(1, target.shape[1]):
 
                 # Pass encoder output into decoder
-                prediction, decoder_hidden, attention_weights = decoder(decoder_input, decoder_hidden, encoder_output)
+                prediction, decoder_hidden, attention_weights = decoder([decoder_input, decoder_hidden, encoder_output])
                 
                 # Calculate loss
                 loss += loss_func(target[:, t], prediction, loss_obj)
@@ -77,11 +77,6 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_di
     # Object used to calculate loss
     loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction="none")
 
-    # Checkpoint for saving
-    check_dir = "./" + check_dir
-    checkpoint = tf.train.Checkpoint(optimizer=optim, encoder=encoder, decoder=decoder)
-    checkpoint_prefix = os.path.join(check_dir, "ckpt")
-
     # Training loop
     for epoch in range(1,num_epochs+1):
 
@@ -105,9 +100,10 @@ def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_di
                 print('Epoch {} Batch {} Loss {:.4f}'.format(epoch, batch, batch_loss.numpy()))
 
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
-        # Save every epoch
-        checkpoint.save(file_prefix = checkpoint_prefix)
 
+        # Save model
+        tf.saved_model.save(encoder, "data/model/encoder_" + str(epoch))
+        tf.saved_model.save(decoder, "data/model/decoder_" + str(epoch))
 
 if __name__ == "__main__":
 
@@ -115,7 +111,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Shakespeare Translator in TensorFlow")
     parser.add_argument("data", metavar="/data_dir", help="Folder containing numpy files of original and translated data", type=str)
     parser.add_argument("params",metavar="param_file.json",help="location of hyperparamater json", type=str)
-    parser.add_argument('-c', type=str, default="/checkpoint_dir", metavar='/training_checkpoints',help='Enable training checkpoints stored to the given dir')
     args = parser.parse_args()
 
     # Hyperparameters from json file
@@ -152,6 +147,6 @@ if __name__ == "__main__":
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
     # Train the model
-    train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset, check_dir)
+    train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset)
 
     
