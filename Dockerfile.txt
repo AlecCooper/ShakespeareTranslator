@@ -1,8 +1,0 @@
-FROM tensorflow/tensorflow
-ADD https://raw.githubusercontent.com/AlecCooper/ShakespeareTranslator/master/lang_model.py /
-ADD https://raw.githubusercontent.com/AlecCooper/ShakespeareTranslator/master/train.py /
-ADD https://raw.githubusercontent.com/AlecCooper/ShakespeareTranslator/master/params.json /
-RUN mkdir /data
-ADD https://raw.githubusercontent.com/AlecCooper/ShakespeareTranslator/master/data/original.npy /data
-ADD https://raw.githubusercontent.com/AlecCooper/ShakespeareTranslator/master/data/translation.npy /data
-CMD python train.py data params.json
