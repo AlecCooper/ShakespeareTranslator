@@ -5,9 +5,10 @@ import os
 import time
 from lang_model import Encoder
 from lang_model import Decoder
+from clean import create_dataset
 
 # The loss function we use to calculate training loss
-def loss_func(actual, pred, loss_obj):
+def loss_func(actual, pred):
 
     # Calculate the cross entropy with our loss object
     loss = loss_obj(actual, pred)
@@ -24,92 +25,77 @@ def loss_func(actual, pred, loss_obj):
 
     return loss
 
-def train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset):
+def train(num_epochs, steps_per_epoch, lr, batch_size, embed_dim, encode_units):
 
-    # Extract the embedding_dim from the data set
-    vocab_len = 24191     # note: come up with more elegent way to grab this num
+  @tf.function
+  def train_step(input_seq, target, encoder_hidden):
 
-    @tf.function
-    def train_step(input_seq, target, encoder_hidden, loss_obj):
+    # Initalize our loss to 0
+    loss = 0
 
-        with tf.GradientTape() as tape:
-
-            # Initalize our loss to 0
-            loss = 0
+    with tf.GradientTape() as tape:
             
-            # Run the encoder on the input
-            encoder_output, encoder_hidden = encoder([input_seq, encoder_hidden])
+      # Run the encoder on the input
+      encoder_output, encoder_hidden = encoder(input_seq, encoder_hidden)
 
-            # Initalize first decoder hidden states to final encoder hidden states
-            decoder_hidden = encoder_hidden
+      # Initalize first decoder hidden states to final encoder hidden states
+      decoder_hidden = encoder_hidden
 
-            decoder_input = tf.expand_dims(target[:,0],axis=1)
+      decoder_input = tf.expand_dims([target_lang.word_index['<start>']] * batch_size, 1)
 
-            # Target forcing
-            for t in range(1, target.shape[1]):
+      # Target forcing
+      for t in range(1, target.shape[1]):
 
-                # Pass encoder output into decoder
-                prediction, decoder_hidden, attention_weights = decoder([decoder_input, decoder_hidden, encoder_output])
+        # Pass encoder output into decoder
+        prediction, decoder_hidden, _ = decoder(decoder_input, decoder_hidden, encoder_output)
                 
-                # Calculate loss
-                loss += loss_func(target[:, t], prediction, loss_obj)
+        # Calculate loss
+        loss += loss_func(target[:, t], prediction)
                 
-                # Teacher forcing
-                decoder_input = tf.expand_dims(target[:, t], 1)
+        # Teacher forcing
+        decoder_input = tf.expand_dims(target[:, t], 1)
 
-            # The total loss of the batch
-            batch_loss = (loss / int(target.shape[1]))
+      # The total loss of the batch
+      batch_loss = (loss / int(target.shape[1]))
 
-            # Train by applying gradients
-            variables = encoder.trainable_variables + decoder.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            optim.apply_gradients(zip(gradients, variables))
+      # Train by applying gradients
+      variables = encoder.trainable_variables + decoder.trainable_variables
+      gradients = tape.gradient(loss, variables)
+      optim.apply_gradients(zip(gradients, variables))
 
-        return batch_loss
+      return batch_loss
 
-    # Define the encoder and decoder
-    encoder = Encoder(vocab_len, embed_dim, encode_units, batch_size)
-    decoder = Decoder(vocab_len, embed_dim, encode_units, batch_size)
+  # Training loop
+  for epoch in range(1, num_epochs+1):
 
-    # Define the optimizer
-    optim = tf.keras.optimizers.Adam(learning_rate=lr)
+    # Time the epochs
+    start = time.time()
 
-    # Object used to calculate loss
-    loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction="none")
+    # Initalize the hidden state of our encoder
+    encoder_hidden = encoder.initalize_hidden()
 
-    # Training loop
-    for epoch in range(1,num_epochs+1):
-
-        # Time the epochs
-        start = time.time()
-
-        # Initalize the hidden state of our encoder
-        encoder_hidden = encoder.initalize_hidden()
-
-        total_loss = 0
+    total_loss = 0
         
-        # Loop through our minibatches
-        for batch in range(int(len(original)/batch_size)):
+    # Loop through our minibatches
+    for (batch, (input_batch, target_batch)) in enumerate(dataset.take(steps_per_epoch)):
 
-            input_batch, target_batch = next(iter(dataset))
-            batch_loss = train_step(input_batch, target_batch, encoder_hidden, loss_obj)
-            total_loss += batch_loss
+      batch_loss = train_step(input_batch, target_batch, encoder_hidden)
+      total_loss += batch_loss
 
-            # Verbose output
-            if batch % 100 == 0:
-                print('Epoch {} Batch {} Loss {:.4f}'.format(epoch, batch, batch_loss.numpy()))
+      # Verbose output
+      if batch % 100 == 0:
+        print('Epoch {} Batch {} Loss {:.4f}'.format(epoch, batch, batch_loss.numpy()))
 
-        print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+    # Save checkpoint
+    checkpoint.save(file_prefix = checkpoint_prefix)
 
-        # Save model
-        tf.saved_model.save(encoder, "data/model/encoder_" + str(epoch))
-        tf.saved_model.save(decoder, "data/model/decoder_" + str(epoch))
+    print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 
 if __name__ == "__main__":
 
     # Get Command Line Arguments
     parser = argparse.ArgumentParser(description="Shakespeare Translator in TensorFlow")
-    parser.add_argument("data", metavar="/data_dir", help="Folder containing numpy files of original and translated data", type=str)
+    parser.add_argument("data", metavar="/data_dir", help="Folder containing the corpus", type=str)
     parser.add_argument("params",metavar="param_file.json",help="location of hyperparamater json", type=str)
     args = parser.parse_args()
 
@@ -123,14 +109,6 @@ if __name__ == "__main__":
     translation = np.load(args.data + "/translation.npy")
     print("Done")
 
-    # Checkpoint directory
-    check_dir = args.c
-    # check if the directory exists
-    cwd = os.getcwd()
-    if not os.path.exists(cwd + check_dir):
-        # Create the dir to hold the checkpoints
-        os.mkdir(cwd + check_dir)
-
     # Number of training epochs for out training loop
     num_epochs = hyper["epochs"]
     # Batch size
@@ -141,12 +119,38 @@ if __name__ == "__main__":
     embed_dim = hyper["embedding dimension"]
     # Numbe of units in our encoder
     encode_units = hyper["encoder units"]
+    # Max sentence length (in words)
+    max_length = 16
 
     # Create Tensorflow dataset
-    dataset = tf.data.Dataset.from_tensor_slices((original, translation))
+    tensors, tokenizers = create_dataset()
+    input_tensor, target_tensor = tensors
+    input_lang, target_lang = tokenizers
+    # Create batches from a tensorflow dataset, shuffle the data for training
+    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).shuffle(len(input_tensor))
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    # Train the model
-    train(num_epochs, lr, batch_size, embed_dim, encode_units, dataset)
+    vocab_input_size = len(input_lang.word_index)+1
+    vocab_target_size = len(target_lang.word_index)+1
 
-    
+    # Define the encoder and decoder
+    encoder = Encoder(vocab_input_size, embed_dim, encode_units, batch_size)
+    decoder = Decoder(vocab_target_size, embed_dim, encode_units, batch_size)
+
+    # Define the optimizer
+    optim = tf.keras.optimizers.Adam(learning_rate=lr)
+
+    # Object used to calculate loss
+    loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True,reduction="none")
+
+    steps_per_epoch = len(input_tensor)//batch_size
+
+    checkpoint_dir = './training_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(optimizer=optim,
+                                    encoder=encoder,
+                                    decoder=decoder)
+
+    # Now we can train!
+    train(num_epochs, steps_per_epoch, lr, batch_size, embed_dim, encode_units)
+        

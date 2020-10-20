@@ -23,10 +23,7 @@ class Encoder(Model):
         self.gru_forward = tf.keras.layers.GRU(self.encode_units,return_sequences=True, recurrent_initializer='glorot_uniform')
         self.gru_backward = tf.keras.layers.GRU(self.encode_units,return_sequences=True, return_state=True, go_backwards=True, recurrent_initializer='glorot_uniform')
 
-    def call(self, inputs):
-        
-        # unpack inputs
-        seq_input, hidden_state = inputs
+    def call(self, seq_input, hidden_state):
 
         # For the first layer we embedd the input into a dense vector
         embed_output = self.embedding(seq_input)
@@ -41,6 +38,7 @@ class Encoder(Model):
 
     def initalize_hidden(self):
         return tf.zeros((self.batch_size, self.encode_units))
+
 
 class Attention(tf.keras.layers.Layer):
     
@@ -69,7 +67,6 @@ class Attention(tf.keras.layers.Layer):
 
         return context_vector, attention_weights
         
-
 class Decoder(Model):
 
     def __init__(self, vocab_len, embed_dim, decode_units, batch_size):
@@ -95,10 +92,7 @@ class Decoder(Model):
         # Initalize so we can calculate attention scores and context vectors
         self.attention = Attention(self.decode_units)
 
-    def call(self, inputs):
-        
-        # Unpack inputs
-        seq_input, hidden_state, encoder_output = inputs
+    def call(self, seq_input, hidden_state, encoder_output):
 
         # Create the context vector and weights for the attention mechanism
         context_vector, attention_weights = self.attention(hidden_state, encoder_output)

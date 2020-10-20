@@ -1,1 +1,1 @@
-{"epochs":10,"batch size":64,"learning rate":0.001, "embedding dimension":256, "encoder units":1024,"max sentence length":40}
+{"epochs":5,"batch size":64,"learning rate":0.001, "embedding dimension":256, "encoder units":1024,"max sentence length":40}
