@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 # Read in the xml file containing our links
-link_file = open("links.xml","r")
+link_file = open("data/links.xml","r")
 contents = link_file.read()
 
 # Create our soup
@@ -18,7 +18,7 @@ for link in links:
     link_list.append(link.text)
 
 # Write to file
-with open("links.txt", "w") as f:
+with open("data/links.txt", "w") as f:
     for link in link_list:
         f.write("%s\n" % link)
 

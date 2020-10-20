@@ -153,7 +153,7 @@ def save(corpus, name):
 def main():
 
     # Read in the xml file containing our links
-    link_file = open("links.txt","r")
+    link_file = open("data/links.txt","r")
     links = link_file.read().splitlines()
 
     # Initalize the driver to run javascript
@@ -171,7 +171,7 @@ def main():
         # Parse the file
         corpus.extend(parse_document(soup))
 
-    save(corpus,"corpus.csv")
+    save(corpus,"data/corpus.csv")
 
 if __name__ == "__main__":
     main()
