@@ -5,7 +5,7 @@ import os
 import time
 from lang_model import Encoder
 from lang_model import Decoder
-from clean import create_dataset
+from clean import create_dataset, clean_sentence
 
 # The loss function we use to calculate training loss
 def loss_func(actual, pred):
@@ -103,12 +103,6 @@ if __name__ == "__main__":
     with open(args.params) as paramfile:
         hyper = json.load(paramfile)
 
-    # load data
-    print("Loading data")
-    original = np.load(args.data + "/original.npy")
-    translation = np.load(args.data + "/translation.npy")
-    print("Done")
-
     # Number of training epochs for out training loop
     num_epochs = hyper["epochs"]
     # Batch size
@@ -154,3 +148,38 @@ if __name__ == "__main__":
     # Now we can train!
     train(num_epochs, steps_per_epoch, lr, batch_size, embed_dim, encode_units)
         
+def translate(sentence):
+
+  # Clean the sentence
+  sentence = clean_sentence(sentence)
+
+  # The translation result
+  result = ""
+
+  # Initalize first encoder state
+  encoder_hidden = [tf.zeros((1, encode_units))]
+  encoder_out, encoder_hidden = encoder(sentence, encoder_hidden)
+
+  # Feed start token into decoder
+  decoder_hidden = encoder_hidden
+  current_word = tf.expand_dims([target_lang.word_index['<start>']], 0)
+
+  # Feed the decoder our sentence
+  for word_index in range(max_length):
+
+    # Pass input through the decoder
+    logits, decoder_hidden, attention_weights = decoder(current_word, decoder_hidden, encoder_out)
+
+    predicted_id = tf.argmax(logits[0]).numpy()
+
+    # Check to see if the sentence is ended
+    if target_lang.index_word[predicted_id] == "<end>":
+      break
+
+    # Add space between words
+    result += target_lang.index_word[predicted_id] + " "
+
+    # Feed the next decoder state
+    current_word = tf.expand_dims([predicted_id], 0)
+
+  print(result)
